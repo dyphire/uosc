@@ -66,6 +66,7 @@ defaults = {
 
 	scale = 1,
 	scale_fullscreen = 1.3,
+	font = '',
 	font_scale = 1,
 	text_border = 1.2,
 	border_radius = 4,
@@ -172,7 +173,7 @@ config = {
 	-- sets max rendering frequency in case the
 	-- native rendering frequency could not be detected
 	render_delay = 1 / 60,
-	font = mp.get_property('options/osd-font'),
+	font = options.font ~= '' and options.font or mp.get_property('options/osd-font'),
 	osd_margin_x = mp.get_property('osd-margin-x'),
 	osd_margin_y = mp.get_property('osd-margin-y'),
 	osd_alignment_x = mp.get_property('osd-align-x'),
