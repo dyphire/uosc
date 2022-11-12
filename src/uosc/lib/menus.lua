@@ -208,6 +208,31 @@ function create_select_tracklist_type_menu_opener(opts)
 		return tonumber(mp.get_property(opts.prop)), snd and tonumber(mp.get_property(snd.prop)) or nil
 	end
 
+	local function escape_codec(str)
+		if not str or str == '' then return '' end
+	
+		local codec_map = {
+			mpeg2 = "mpeg2",
+			dvvideo = "dv",
+			pcm = "pcm",
+			pgs = "pgs",
+			subrip = "srt",
+			vtt = "vtt",
+			dvd_sub = "vob",
+			dvb_sub = "dvb",
+			dvb_tele = "teletext",
+			arib = "arib"
+		}
+	
+		for key, value in pairs(codec_map) do
+			if str:find(key) then
+				return value
+			end
+		end
+	
+		return str
+	end
+
 	local function serialize_tracklist(tracklist)
 		local items = {}
 
@@ -261,7 +286,7 @@ function create_select_tracklist_type_menu_opener(opts)
 					h(track['demux-w'] and (track['demux-w'] .. 'x' .. track['demux-h']) or (track['demux-h'] .. 'p'))
 				end
 				if track['demux-fps'] then h(string.format('%.5gfps', track['demux-fps'])) end
-				h(track.codec)
+				if track['codec'] then h(escape_codec(track.codec)) end
 				if track['audio-channels'] then
 					h(track['audio-channels'] == 1
 						and t('%s channel', track['audio-channels'])
