@@ -92,6 +92,41 @@ function create_self_updating_menu_opener(opts)
 end
 
 function create_select_tracklist_type_menu_opener(menu_title, track_type, track_prop, load_command, download_command)
+	----- string
+	local function is_empty(input)
+		if input == nil or input == "" then
+			return true
+		end
+	end
+
+	local function replace(str, what, with)
+		if is_empty(str) then return "" end
+		if is_empty(what) then return str end
+		if with == nil then with = "" end
+		what = string.gsub(what, "[%(%)%.%+%-%*%?%[%]%^%$%%]", "%%%1")
+		with = string.gsub(with, "[%%]", "%%%%")
+		return string.gsub(str, what, with)
+	end
+
+	local function esc_for_title(str)
+		str = str:gsub('^[_%.%-%s]*', '')
+				:gsub('%.([^%.]+)$', '')
+		return str
+	end
+
+	local function esc_for_codec(str)
+		if str:match("MPEG2") then str = "MPEG2"
+		elseif str:match("DVVIDEO") then str = "DV"
+		elseif str:match("PCM") then str = "PCM"
+		elseif str:match("PGS") then str = "PGS"
+    	elseif str:match("SUBRIP") then str = "SRT"
+    	elseif str:match("VTT") then str = "VTT"
+    	elseif str:match("DVB_SUB") then str = "DVB"
+    	elseif str:match("DVD_SUB") then str = "VOB"
+    	end
+		return str
+	end
+
 	local function serialize_tracklist(tracklist)
 		local items = {}
 
@@ -114,12 +149,8 @@ function create_select_tracklist_type_menu_opener(menu_title, track_type, track_
 		local active_index = nil
 		local disabled_item = nil
 
-		-- Add option to disable a subtitle track. This works for all tracks,
-		-- but why would anyone want to disable audio or video? Better to not
-		-- let people mistakenly select what is unwanted 99.999% of the time.
-		-- If I'm mistaken and there is an active need for this, feel free to
-		-- open an issue.
-		if track_type == 'sub' then
+		-- Add option to disable track. This works for all tracks.
+		if track_type ~= '' then
 			disabled_item = {title = t('Disabled'), italic = true, muted = true, hint = '—', value = nil, active = true}
 			items[#items + 1] = disabled_item
 		end
@@ -135,7 +166,7 @@ function create_select_tracklist_type_menu_opener(menu_title, track_type, track_
 					h(track['demux-w'] and (track['demux-w'] .. 'x' .. track['demux-h']) or (track['demux-h'] .. 'p'))
 				end
 				if track['demux-fps'] then h(string.format('%.5gfps', track['demux-fps'])) end
-				h(track.codec)
+				h(esc_for_codec(track.codec:upper()))
 				if track['audio-channels'] then
 					h(track['audio-channels'] == 1
 						and t('%s channel', track['audio-channels'])
@@ -145,6 +176,10 @@ function create_select_tracklist_type_menu_opener(menu_title, track_type, track_
 				if track.forced then h(t('forced')) end
 				if track.default then h(t('default')) end
 				if track.external then h(t('external')) end
+
+				local filename = mp.get_property_native('filename/no-ext')
+				if track.title then track.title = replace(track.title, filename, '') end
+				if track.external then track.title = esc_for_title(track.title) end
 
 				items[#items + 1] = {
 					title = (track.title and track.title or t('Track %s', track.id)),
