@@ -24,6 +24,23 @@ end
 ---@return string
 function trim(str) return str:match('^%s*(.-)%s*$') end
 
+-- Escape special characters in url.
+---@param str string
+---@return string|nil
+function url_decode(str)
+	local function hex_to_char(x)
+		return string.char(tonumber(x, 16))
+	end
+	if str ~= nil then
+		str = str:gsub('^file://', '')
+		str = str:gsub('%%(%x%x)', hex_to_char)
+		if str:match('://localhost:?') then
+			str = str:gsub('^.*/', '')
+		end
+	end
+	return str
+end
+
 -- Trim any `char` from the end of the string.
 ---@param str string
 ---@param char string
