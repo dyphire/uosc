@@ -101,6 +101,7 @@ defaults = {
 	chapter_range_patterns = 'openings:オープニング;endings:エンディング',
 	languages = 'slang,en',
 	disable_elements = '',
+	ziggy_path = 'default',
 }
 options = table_copy(defaults)
 opt.read_options(options, 'uosc', function(changed_options)
@@ -406,7 +407,9 @@ require('lib/menus')
 -- Determine path to ziggy
 do
 	local bin = 'ziggy-' .. (state.platform == 'windows' and 'windows.exe' or state.platform)
-	config.ziggy_path = os.getenv('MPV_UOSC_ZIGGY') or join_path(mp.get_script_directory(), join_path('bin', bin))
+	config.ziggy_path = os.getenv('MPV_UOSC_ZIGGY') or
+	options.ziggy_path == 'default' and join_path(mp.get_script_directory(), join_path('bin', bin)) or
+	utils.join_path(mp.command_native({ 'expand-path', options.ziggy_path }), bin)
 end
 
 --[[ STATE UPDATERS ]]
