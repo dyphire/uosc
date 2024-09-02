@@ -1683,6 +1683,7 @@ function Menu:render()
 
 		-- Menu title
 		if draw_title then
+			local title_height = self.item_height + self.padding - 3
 			local requires_submit = menu.search_debounce == 'submit'
 			local rect = {
 				ax = content_rect.ax,
@@ -1695,6 +1696,26 @@ function Menu:render()
 
 			if menu.title and not menu.ass_safe_title then
 				menu.ass_safe_title = ass_escape(menu.title)
+			end
+
+			-- Background
+			if menu.search then
+				ass:rect(content_rect.ax + 3, rect.ay + 3, content_rect.bx - 3, rect.ay + title_height - 1, {
+					color = fg .. '\\1a&HFF', opacity = menu_opacity * 0.1,
+					radius = state.radius > 0 and state.radius + self.padding or 0,
+					border = 1, border_color = fg, border_opacity = menu_opacity * 0.8
+				})
+				ass:texture(content_rect.ax + 3, rect.ay + 3, content_rect.bx - 3, rect.ay + title_height - 1, 'n', {
+					size = 80, color = bg, opacity = menu_opacity * 0.1, anchor_x = content_rect.ax + 2, anchor_y = rect.ay + 2,
+				})
+			else
+				ass:rect(content_rect.ax + 2, rect.ay + 2, content_rect.bx - 2, rect.ay + title_height, {
+					color = fg, opacity = menu_opacity * 0.8,
+					radius = state.radius > 0 and state.radius + self.padding or 0,
+				})
+				ass:texture(content_rect.ax + 2, rect.ay + 2, content_rect.bx - 2, rect.ay + title_height, 'n', {
+					size = 80, color = bg, opacity = menu_opacity * 0.1,
+				})
 			end
 
 			-- Separator
@@ -1789,7 +1810,7 @@ function Menu:render()
 				ass:txt(rect.cx, rect.cy, 5, menu.ass_safe_title, {
 					size = self.font_size,
 					bold = true,
-					color = bgt,
+					color = bg,
 					wrap = 2,
 					opacity = menu_opacity,
 					clip = '\\clip(' .. rect.ax .. ',' .. rect.ay .. ',' .. rect.bx .. ',' .. rect.by .. ')',
