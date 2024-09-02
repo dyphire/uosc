@@ -935,8 +935,9 @@ bind_command('playlist', create_self_updating_menu_opener({
 			local is_url = is_protocol(item.filename)
 			local title = type(item.title) == 'string' and #item.title > 0 and item.title or false
 			items[index] = {
-				title = title or ((is_url and #playlist == 1 and mp.get_property('media-title')) or
-				    (is_url and url_decode(item.filename)) or serialize_path(item.filename).basename),
+				title = (is_url and #playlist == 1 and mp.get_property('media-title')) or
+				        (is_url and title and title) or (is_url and url_decode(item.filename)) or
+					    serialize_path(item.filename).basename,
 				hint = tostring(index),
 				active = item.current,
 				value = index,
