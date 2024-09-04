@@ -1321,6 +1321,7 @@ function Menu:render()
 			bx = bx,
 			by = by + self.padding,
 		}
+		local blur_selected_index = self.mouse_nav and is_current
 		local blur_action_index = self.mouse_nav and menu.action_index ~= nil
 
 		-- Background
@@ -1375,18 +1376,6 @@ function Menu:render()
 				bx = menu_rect.bx + (item.items and self.gap or -self.padding), -- to bridge the gap with cursor
 				by = math.min(item_ay + self.scroll_step, menu_rect.by),
 			}
-
-			-- Select hovered item
-			if is_current and self.mouse_nav and item.selectable ~= false
-				-- Do not select items if cursor is moving towards a submenu
-				and (not submenu_rect or not cursor:direction_to_rectangle_distance(submenu_rect))
-				and (submenu_is_hovered or get_point_to_rectangle_proximity(cursor, item_rect_hitbox) == 0) then
-				menu.selected_index = index
-				if not is_selected then
-					is_selected = true
-					request_render()
-				end
-			end
 
 			local has_background = is_selected or item.active
 			local next_item = menu.items[index + 1]
@@ -1567,6 +1556,23 @@ function Menu:render()
 					clip = clip,
 				})
 			end
+
+			-- Select hovered item
+			if is_current and self.mouse_nav and item.selectable ~= false then
+				if submenu_rect and cursor:direction_to_rectangle_distance(submenu_rect)
+					or actions_rect and actions_rect.is_outside and cursor:direction_to_rectangle_distance(actions_rect) then
+					blur_selected_index = false
+				else
+					if submenu_is_hovered or get_point_to_rectangle_proximity(cursor, item_rect_hitbox) == 0 then
+						blur_selected_index = false
+						menu.selected_index = index
+						if not is_selected then
+							is_selected = true
+							request_render()
+						end
+					end
+				end
+			end
 		end
 
 		-- Footnote / Selected action label
@@ -1725,6 +1731,10 @@ function Menu:render()
 			end
 		end
 
+		-- We are in mouse nav and cursor isn't hovering any item
+		if blur_selected_index then
+			menu.selected_index = nil
+		end
 		if blur_action_index then
 			menu.action_index = nil
 			request_render()
