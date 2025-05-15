@@ -880,11 +880,43 @@ function Menu:search_cursor_move(amount, word_mode)
 	local menu = self:get_menu()
 	if not menu or not menu.search then return end
 	local query, cursor = menu.search.query, menu.search.cursor
+
+	local function utf8_next(s, i)
+		if i >= #s then return #s end
+		local len = utf8_char_bytes(s, i + 1)
+		return math.min(i + len, #s)
+	end
+
+	local function utf8_prev(s, i)
+		if i <= 0 then return 0 end
+		local pos = 1
+		local last_valid = 0
+		while pos <= #s do
+			local len = utf8_char_bytes(s, pos)
+			if pos > i then break end
+			last_valid = pos - 1
+			pos = pos + len
+		end
+		return last_valid
+	end
+
 	if word_mode then
 		menu.search.cursor = find_string_segment_bound(query, cursor, amount) + (amount < 0 and -1 or 0)
 	else
-		menu.search.cursor = clamp(0, cursor + amount, #query)
+		local move = amount > 0 and utf8_next or utf8_prev
+		local step_count = 0
+		local limit = math.abs(amount)
+
+		while step_count < limit do
+			local next_cursor = move(query, cursor)
+			if next_cursor == cursor then break end
+			cursor = next_cursor
+			step_count = step_count + 1
+		end
+
+		menu.search.cursor = clamp(0, cursor, #query)
 	end
+
 	request_render()
 end
 
@@ -975,22 +1007,21 @@ function Menu:search_query_delete(event, word_mode)
 
 	local cursor, old_query = search.cursor, search.query
 	local head, tail = string.sub(old_query, 1, cursor), string.sub(old_query, cursor + 1)
-	local tail_cursor = 1
 
 	if word_mode then
-		tail_cursor = find_string_segment_bound(tail, 0, 1) + 1
-	else
+		cursor = find_string_segment_bound(head, cursor, -1) - 1
+	elseif cursor > 0 then
 		-- The while loop is for skipping utf8 continuation bytes
-		while tail_cursor < #tail and tail:byte(tail_cursor) >= 0x80 and tail:byte(tail_cursor) <= 0xbf do
-			tail_cursor = tail_cursor + 1
+		while cursor > 1 and old_query:byte(cursor) >= 0x80 and old_query:byte(cursor) <= 0xbf do
+			cursor = cursor - 1
 		end
-		tail_cursor = tail_cursor + 1
+		cursor = cursor - 1
 	end
 
-	local new_query = head .. tail:sub(tail_cursor)
+	local new_query = head:sub(1, cursor) .. tail
 	if new_query ~= old_query then
 		search.query = new_query
-		search.cursor = #head
+		search.cursor = math.max(0, cursor)
 		self:search_trigger()
 	end
 
