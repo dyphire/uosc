@@ -349,7 +349,6 @@ function create_default_menu_items()
 				{title = t('Key bindings'), value = 'script-binding uosc/keybinds'},
 				{title = t('Show in directory'), value = 'script-binding uosc/show-in-directory'},
 				{title = t('Open config folder'), value = 'script-binding uosc/open-config-directory'},
-				{title = t('Update uosc'), value = 'script-binding uosc/update'},
 			},
 		},
 		{title = t('Quit'), value = 'quit'},
@@ -386,6 +385,7 @@ state = {
 	ime_active = mp.get_property_native('input-ime'),
 	chapters = {},
 	chapter_ranges = {},
+	current_clipboard_backend = mp.get_property_native('current-clipboard-backend'),
 	border = mp.get_property_native('border'),
 	title_bar = mp.get_property_native('title-bar'),
 	fullscreen = mp.get_property_native('fullscreen'),
@@ -1080,9 +1080,6 @@ bind_command('open-config-directory', function()
 	else
 		msg.error('Couldn\'t serialize config path "' .. config_path .. '".')
 	end
-end)
-bind_command('update', function()
-	if not Elements:has('updater') then require('elements/Updater'):new() end
 end)
 
 --[[ MESSAGE HANDLERS ]]
